@@ -1,0 +1,187 @@
+## Création de la base de données des logements existants 
+setwd("C:/Users/akrou/OneDrive/Documenti")
+adresses <- read.csv("adresses-69.csv", header = TRUE, dec = ".", sep = ";")
+
+# Extraire les codes postaux uniques du fichier CSV
+codes_postaux <- adresses$code_postal
+codes_postaux <- unique(codes_postaux)
+codes_postaux
+length(codes_postaux)
+
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+# URL de base pour l'API
+base_url <- "https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-existants/lines"
+
+# Liste vide pour stocker les résultats
+resultats <- list()
+
+# Paramètres de la requête commune (sans sélection spécifique des colonnes)
+common_params <- list(
+  size = 10000 # Limite maximale de résultats par page
+)
+
+# Boucle sur chaque code postal unique
+for (code_postal in codes_postaux) {
+  cat("Traitement du code postal : ", code_postal, "\n")
+  
+  params <- common_params
+  params$q <- code_postal
+  params$q_fields <- "Code_postal_(BAN)"
+  params$page <- 1
+  
+  repeat {
+    # Encodage de l'URL avec les paramètres actuels
+    url_encoded <- modify_url(base_url, query = params)
+    print(paste("URL encodée:", url_encoded))
+    
+    # Effectuer la requête
+    response <- GET(url_encoded)
+    status <- status_code(response)
+    print(paste("Statut de la réponse :", status))
+    
+    if (status == 200) {
+      cat("Requête réussie pour le code postal :", code_postal, "\n")
+      
+      # Convertir la réponse en JSON
+      content <- fromJSON(rawToChar(response$content), flatten = FALSE)
+      
+      # Vérifier si des résultats sont disponibles
+      if (!is.null(content$results) && length(content$results) > 0) {
+        df <- as.data.frame(content$results)
+        
+        # Stocker les résultats sans filtrer par l'année de construction
+        resultats[[code_postal]] <- df
+        
+        # Si le nombre de résultats dépasse 1000, on ajuste les requêtes pour paginer
+        if (nrow(df) >= common_params$size) {
+          cat("Plus de 1000 résultats pour le code postal", code_postal, ". Continuation...\n")
+          params$page <- params$page + 1
+        } else {
+          break
+        }
+      } else {
+        print(paste("Pas de résultats pour le code postal :", code_postal))
+        break
+      }
+    } else {
+      print(paste("Erreur pour le code postal :", code_postal, "- Statut :", status))
+      break
+    }
+    
+    Sys.sleep(1)  # Pause pour éviter de surcharger l'API
+  }
+}
+
+# Combiner tous les résultats dans un seul dataframe
+df_final <- bind_rows(resultats)
+
+# Exporter les résultats dans un fichier CSV
+write.csv(df_final, "exitants_69.csv", row.names = FALSE)
+
+cat("Extraction terminée et fichier CSV exporté.")
+
+#Ajout d'une colonne Type pour differencier logements anciens et neufs 
+adressesancien <- read.csv("existants_692.csv", header = TRUE, dec = ".", sep = ",")
+
+adressesancien$Type="Ancien"
+View(adressesancien$Type)
+
+View(adressesancien)
+write.csv(adressesancien, "existants_6922", row.names = FALSE)
+
+## Création de la base de données des logements neufs 
+setwd("C:/Users/akrou/OneDrive/Documenti")
+adresses <- read.csv("adresses-69.csv", header = TRUE, dec = ".", sep = ";")
+
+# Extraire les codes postaux uniques du fichier CSV
+codes_postaux <- adresses$code_postal
+codes_postaux <- unique(codes_postaux)
+codes_postaux
+length(codes_postaux)
+
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+# URL de base pour l'API
+base_url <- "https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-neufs/lines"
+
+# Liste vide pour stocker les résultats
+resultats <- list()
+
+# Paramètres de la requête commune (sans sélection spécifique des colonnes)
+common_params <- list(
+  size = 10000 # Limite maximale de résultats par page
+)
+
+# Boucle sur chaque code postal unique
+for (code_postal in codes_postaux) {
+  cat("Traitement du code postal : ", code_postal, "\n")
+  
+  params <- common_params
+  params$q <- code_postal
+  params$q_fields <- "Code_postal_(BAN)"
+  params$page <- 1
+  
+  repeat {
+    # Encodage de l'URL avec les paramètres actuels
+    url_encoded <- modify_url(base_url, query = params)
+    print(paste("URL encodée:", url_encoded))
+    
+    # Effectuer la requête
+    response <- GET(url_encoded)
+    status <- status_code(response)
+    print(paste("Statut de la réponse :", status))
+    
+    if (status == 200) {
+      cat("Requête réussie pour le code postal :", code_postal, "\n")
+      
+      # Convertir la réponse en JSON
+      content <- fromJSON(rawToChar(response$content), flatten = FALSE)
+      
+      # Vérifier si des résultats sont disponibles
+      if (!is.null(content$results) && length(content$results) > 0) {
+        df <- as.data.frame(content$results)
+        
+        # Stocker les résultats sans filtrer par l'année de construction
+        resultats[[code_postal]] <- df
+        
+        # Si le nombre de résultats dépasse 1000, on ajuste les requêtes pour paginer
+        if (nrow(df) >= common_params$size) {
+          cat("Plus de 1000 résultats pour le code postal", code_postal, ". Continuation...\n")
+          params$page <- params$page + 1
+        } else {
+          break
+        }
+      } else {
+        print(paste("Pas de résultats pour le code postal :", code_postal))
+        break
+      }
+    } else {
+      print(paste("Erreur pour le code postal :", code_postal, "- Statut :", status))
+      break
+    }
+    
+    Sys.sleep(1)  # Pause pour éviter de surcharger l'API
+  }
+}
+
+# Combiner tous les résultats dans un seul dataframe
+df_final <- bind_rows(resultats)
+
+# Exporter les résultats dans un fichier CSV
+write.csv(df_final, "neufs_69.csv", row.names = FALSE)
+
+cat("Extraction terminée et fichier CSV exporté.")
+#Ajout d'une colonne Type pour differencier neufs et anciens 
+setwd("C:/Users/akrou/OneDrive/Documenti")
+adressesnew <- read.csv("neufs_69.csv", header = TRUE, dec = ".", sep = ",")
+
+adressesnew$Type="Neuf"
+View(adressesnew$Type)
+View(adressesnew)
+
+write.csv(adressesnew, "neufs_692", row.names = FALSE)
