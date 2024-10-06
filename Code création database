@@ -83,14 +83,6 @@ write.csv(df_final, "exitants_69.csv", row.names = FALSE)
 
 cat("Extraction terminée et fichier CSV exporté.")
 
-#Ajout d'une colonne Type pour differencier logements anciens et neufs 
-adressesancien <- read.csv("existants_692.csv", header = TRUE, dec = ".", sep = ",")
-
-adressesancien$Type="Ancien"
-View(adressesancien$Type)
-
-View(adressesancien)
-write.csv(adressesancien, "existants_6922", row.names = FALSE)
 
 ## Création de la base de données des logements neufs 
 setwd("C:/Users/akrou/OneDrive/Documenti")
@@ -176,12 +168,26 @@ df_final <- bind_rows(resultats)
 write.csv(df_final, "neufs_69.csv", row.names = FALSE)
 
 cat("Extraction terminée et fichier CSV exporté.")
-#Ajout d'une colonne Type pour differencier neufs et anciens 
+
+## Fusionner les 2 bases de données
+# Charger les fichiers CSV
 setwd("C:/Users/akrou/OneDrive/Documenti")
-adressesnew <- read.csv("neufs_69.csv", header = TRUE, dec = ".", sep = ",")
+existants <- read.csv("existants_692.csv", header = TRUE, dec = ".", sep = ",")
+neufs <- read.csv("neufs_69.csv", header = TRUE, dec = ".", sep = ",")
 
-adressesnew$Type="Neuf"
-View(adressesnew$Type)
-View(adressesnew)
+# Ajouter une colonne 'Type' pour différencier les deux jeux de données
+neufs$Type <- "Neuf"
+existants$Type <- "Ancien"
 
-write.csv(adressesnew, "neufs_692", row.names = FALSE)
+# Identifier les colonnes communes
+colonnes_communes <- intersect(names(existants), names(neufs))
+
+# Sélectionner uniquement les colonnes communes dans chaque tableau
+existants_communs <- existants[, colonnes_communes]
+neufs_communs <- neufs[, colonnes_communes]
+
+# Combiner les deux tables en empilant les lignes
+Logementscomplet <- rbind(existants_communs, neufs_communs)
+
+# Afficher le résultat
+View(Logementscomplet)
