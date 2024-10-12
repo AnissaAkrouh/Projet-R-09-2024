@@ -1,0 +1,359 @@
+# Charger les bibliothèques nécessaires
+library(shiny)
+library(shinydashboard)
+library(ggplot2)
+library(leaflet)
+library(sf)
+library(readr)
+library(dplyr)
+library(tidyr)
+
+# Charger la base de données
+logements <- read_csv("Logementscomplet.csv")
+
+# Définir les palettes de couleurs
+couleurs_dpe <- c("#001F3F", "#3A6D8C", "#6A9AB0", "#EAD8B1", "#257180", "#F2E5BF", "#FD8B51", "#CB6040")
+
+# Fonction pour créer les graphiques
+create_plot <- function(plot_type, data, x_var = NULL, y_var = NULL) {
+  if (plot_type == "dpePieChart") {
+    dpe_counts <- as.data.frame(table(data$Etiquette_DPE))
+    colnames(dpe_counts) <- c("DPE", "Count")
+    
+    ggplot(dpe_counts, aes(x = "", y = Count, fill = DPE)) +
+      geom_bar(stat = "identity", width = 1) +
+      coord_polar(theta = "y") +
+      scale_fill_manual(values = couleurs_dpe) +
+      geom_text(aes(label = paste0(round(Count / sum(Count) * 100, 1), "%")),
+                position = position_stack(vjust = 0.5)) +
+      labs(title = "Répartition des Étiquettes DPE") +
+      theme_void()
+  } else if (plot_type == "costBarChart") {
+    ggplot(data, aes(x = Etiquette_DPE, y = Coût_total_5_usages, fill = Etiquette_DPE)) +
+      geom_bar(stat = "summary", fun = "mean") +
+      scale_fill_manual(values = couleurs_dpe) +
+      labs(title = "Coût Énergétique Moyen par Étiquette DPE", x = "Étiquette DPE", y = "Coût Total (Euros)") +
+      theme_minimal()
+  } else if (plot_type == "emissionBarChart") {
+    ggplot(data, aes(x = Etiquette_DPE, y = Emission_GES_5_usages, fill = Etiquette_DPE)) +
+      geom_bar(stat = "summary", fun = "mean") +
+      scale_fill_manual(values = couleurs_dpe) +
+      labs(title = "Émissions de GES Moyennes par Étiquette DPE", x = "Étiquette DPE", y = "Émissions (kg CO2)") +
+      theme_minimal()
+  } else if (plot_type == "scatterPlot") {
+    formula <- as.formula(paste(y_var, "~", x_var))
+    model <- lm(formula, data = data)
+    
+    ggplot(data, aes_string(x = x_var, y = y_var)) +
+      geom_point(color = "#3A6D8C") +
+      geom_smooth(method = "lm", col = "#CB6040", se = FALSE) +
+      labs(title = paste("Nuage de points:", x_var, "vs", y_var),
+           x = x_var, y = y_var) +
+      theme_minimal() +
+      annotate("text", x = Inf, y = Inf, label = paste("R² =", round(summary(model)$r.squared, 2)),
+               hjust = 1.1, vjust = 1.1, size = 4)
+  } else if (plot_type == "boxplotCost") {
+    ggplot(data, aes(x = Etiquette_DPE, y = Coût_total_5_usages)) +
+      geom_boxplot(aes(fill = Etiquette_DPE)) +
+      scale_fill_manual(values = couleurs_dpe) +
+      labs(title = "Répartition des Coûts Énergétiques par Étiquette DPE", x = "Étiquette DPE", y = "Coût Total (Euros)") +
+      theme_minimal()
+  }
+}
+
+# Partie UI
+ui <- dashboardPage(
+  dashboardHeader(title = "GreenTech"),
+ 
+  dashboardSidebar(
+    sidebarMenu(
+      # Sélecteur de thème ici pour être toujours visible
+      selectInput("theme", "Sélectionner un thème :",
+                  choices = c("Thème clair" = "light-theme",
+                              "Thème sombre" = "dark-theme",
+                              "Thème pastel" = "pastel-theme",
+                              "Thème professionnel" = "professional-theme",
+                              "Thème coloré" = "colorful-theme"),
+                  selected = "light-theme"),
+      menuItem("Contexte", tabName = "context", icon = icon("info-circle")),
+      menuItem("Statistiques", tabName = "stats", icon = icon("chart-line")),
+      menuItem("Graphiques", tabName = "graphs", icon = icon("chart-bar")),
+      menuItem("Cartographie", tabName = "map", icon = icon("globe"))
+    )
+  ),
+ 
+  dashboardBody(
+    # Inclure le fichier CSS pour les thèmes
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+    ),
+    
+    # Appliquer le thème sélectionné à tout le contenu
+    uiOutput("themeApplied")
+  )
+)
+
+# Partie serveur
+server <- function(input, output, session) {
+ 
+  # Appliquer dynamiquement le thème sélectionné à tout le contenu de la page
+  output$themeApplied <- renderUI({
+    div(class = input$theme,
+        tabItems(
+          # Onglet Contexte
+          tabItem(tabName = "context",
+                  fluidRow(
+                    column(width = 6,
+                           box(
+                             title = "Contexte", width = NULL,
+                             p("Le Diagnostic de Performance Énergétique (DPE) évalue la performance énergétique des logements en les classant de A (faible consommation) à G (forte consommation). Ce site propose une analyse des logements du Rhône, explorant l’impact du DPE sur différentes variables telles que les coûts énergétiques et les émissions de gaz à effet de serre."),
+                             img(src = "https://bo.effy.fr/sites/default/files/styles/ckeditor_webp_730/public/2021-02/DPE_VISUEL_DPE_730x400%402x-min.jpg.webp?itok=O1wddQRP",
+                                 height = "300px", width = "400px")
+                           )
+                    ),
+                    column(width = 6,
+                           box(
+                             title = "Filtres", width = NULL,
+                             p("Pour affiner votre recherche, utilisez les filtres ci-dessous."),
+                             selectInput("type_selection", "Sélectionner le type de logement:",
+                                         choices = c("Ancien", "Neuf", "Tous"),
+                                         selected = "Tous"),
+                             selectInput("postal_code", "Sélectionner le code postal:",
+                                         choices = c("Tous", unique(logements$Code_postal_.BAN.)),
+                                         selected = "Tous"),
+                             downloadButton("downloadData", "Exporter les données en CSV")
+                           )
+                    )
+                  )
+          ),
+          
+          # Onglet Statistiques
+          tabItem(tabName = "stats",
+                  fluidRow(
+                    column(width = 6,
+                           box(
+                             title = "Statistiques", width = NULL,
+                             textOutput("summaryText"),
+                             tableOutput("dpeStatsTable")
+                           )
+                    )
+                  )
+          ),
+          
+          # Onglet Graphiques
+          tabItem(tabName = "graphs",
+                  fluidRow(
+                    box(
+                      title = "Sélectionner les variables pour le Nuage de Points", width = 6,
+                      selectInput("x_var", "Sélectionner la variable X:",
+                                  choices = c("Consommation chauffage " = "Conso_chauffage_é_finale",
+                                              "Émissions Gaz à effet de Serre" = "Emission_GES_chauffage",
+                                              "Coût total" = "Coût_total_5_usages",
+                                              "Surface Habitable Logement" = "Surface_habitable_logement")),
+                      selectInput("y_var", "Sélectionner la variable Y:",
+                                  choices = c("Conso Chauffage Finale" = "Conso_chauffage_é_finale",
+                                              "Émissions GES Chauffage" = "Emission_GES_chauffage",
+                                              "Coût Total 5 Usages" = "Coût_total_5_usages",
+                                              "Surface Habitable Logement" = "Surface_habitable_logement")),
+                      plotOutput("scatterPlot"),
+                      downloadButton("downloadScatterPlot", "Télécharger PNG")
+                    )
+                  ),
+                  fluidRow(
+                    box(
+                      title = "Répartition des logements par étiquettes DPE", width = 6,
+                      plotOutput("dpePieChart"),
+                      downloadButton("downloadDpePieChart", "Télécharger PNG")
+                    ),
+                    box(
+                      title = "Coût Énergétique Moyen des logements par Étiquette DPE", width = 6,
+                      plotOutput("costBarChart"),
+                      downloadButton("downloadCostBarChart", "Télécharger PNG")
+                    )
+                  ),
+                  fluidRow(
+                    box(
+                      title = "Boîte à Moustaches: Coûts par Étiquette DPE", width = 6,
+                      plotOutput("boxplotCost"),
+                      downloadButton("downloadBoxplotCost", "Télécharger PNG")
+                    ),
+                    box(
+                      title = "Émissions de Gaz à Effet de Serre Moyennes des logements par Étiquette DPE", width = 6,
+                      plotOutput("emissionBarChart"),
+                      downloadButton("downloadEmissionBarChart", "Télécharger PNG")
+                    )
+                  )
+          ),
+          
+          # Onglet Cartographie
+          tabItem(tabName = "map",
+                  fluidRow(
+                    box(
+                      title = "Carte des Logements", width = 12,
+                      leafletOutput("housingMap"),
+                      textOutput("noDataText")  # Ajout du texte pour indiquer aucune donnée
+                    )
+                  )
+          )
+        )
+    )
+  })
+ 
+  # Filtrer les données en fonction des sélections
+  data_filtered <- reactive({
+    logements %>%
+      filter((Type == input$type_selection | input$type_selection == "Tous") &
+               (Code_postal_.BAN. == input$postal_code | input$postal_code == "Tous"))
+  })
+ 
+  # Texte pour les statistiques
+  output$summaryText <- renderText({
+    data <- data_filtered()
+    nombre_neufs <- sum(data$Type == "Neuf")
+    nombre_anciens <- sum(data$Type == "Ancien")
+    
+    if (input$postal_code == "Tous") {
+      paste0("Dans tous les départements sélectionnés, il y a ",
+             nombre_neufs, " logements neufs et ", nombre_anciens, " logements anciens.")
+    } else {
+      paste0("Dans le département ", input$postal_code, ", il y a ",
+             nombre_neufs, " logements neufs et ", nombre_anciens, " logements anciens.")
+    }
+  })
+ 
+  # Tableau des statistiques DPE
+  output$dpeStatsTable <- renderTable({
+    data <- data_filtered()
+    
+    if (nrow(data) == 0) return(data.frame(Message = "Aucune donnée disponible"))
+    
+    dpe_stats <- data %>%
+      group_by(Etiquette_DPE) %>%
+      summarise(
+        Nombre_de_logements = n(),
+        Coût_total_moyen = mean(Coût_total_5_usages, na.rm = TRUE),
+        Emission_GES_moyenne = mean(Emission_GES_5_usages, na.rm = TRUE)
+      )
+    return(dpe_stats)
+  })
+ 
+  # Graphiques
+  output$dpePieChart <- renderPlot({
+    create_plot("dpePieChart", data_filtered())
+  })
+ 
+  output$costBarChart <- renderPlot({
+    create_plot("costBarChart", data_filtered())
+  })
+ 
+  output$emissionBarChart <- renderPlot({
+    create_plot("emissionBarChart", data_filtered())
+  })
+ 
+  output$scatterPlot <- renderPlot({
+    req(input$x_var, input$y_var)
+    create_plot("scatterPlot", data_filtered(), input$x_var, input$y_var)
+  })
+ 
+  output$boxplotCost <- renderPlot({
+    create_plot("boxplotCost", data_filtered())
+  })
+ 
+  # Téléchargement des graphiques en PNG
+  output$downloadScatterPlot <- downloadHandler(
+    filename = function() {
+      paste("scatter_plot_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      png(file)
+      print(create_plot("scatterPlot", data_filtered(), input$x_var, input$y_var))
+      dev.off()
+    }
+  )
+ 
+  output$downloadDpePieChart <- downloadHandler(
+    filename = function() {
+      paste("dpe_pie_chart_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      png(file)
+      print(create_plot("dpePieChart", data_filtered()))
+      dev.off()
+    }
+  )
+ 
+  output$downloadCostBarChart <- downloadHandler(
+    filename = function() {
+      paste("cost_bar_chart_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      png(file)
+      print(create_plot("costBarChart", data_filtered()))
+      dev.off()
+    }
+  )
+ 
+  output$downloadBoxplotCost <- downloadHandler(
+    filename = function() {
+      paste("boxplot_cost_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      png(file)
+      print(create_plot("boxplotCost", data_filtered()))
+      dev.off()
+    }
+  )
+ 
+  output$downloadEmissionBarChart <- downloadHandler(
+    filename = function() {
+      paste("emission_bar_chart_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      png(file)
+      print(create_plot("emissionBarChart", data_filtered()))
+      dev.off()
+    }
+  )
+ 
+  # Téléchargement des données filtrées en CSV
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste("data_filtered_", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(data_filtered(), file, row.names = FALSE)
+    }
+  )
+ 
+  # Carte des logements
+  output$housingMap <- renderLeaflet({
+    data <- data_filtered()
+    
+    if (nrow(data) == 0) {
+      output$noDataText <- renderText("Aucune donnée géographique pour les données sélectionnées.")
+      return(NULL)
+    } else {
+      output$noDataText <- renderText("")
+    }
+    
+    data <- data %>%
+      separate(X_geopoint, into = c("latitude", "longitude"), sep = ",", remove = FALSE) %>%
+      mutate(across(c(latitude, longitude), as.numeric)) %>%
+      filter(!is.na(latitude), !is.na(longitude))  # Supprimer les lignes avec des coordonnées manquantes
+    
+    leaflet(data) %>%
+      addTiles() %>%
+      addAwesomeMarkers(lng = ~longitude, lat = ~latitude,
+                        popup = ~paste("Type: ", Type, "<br>",
+                                       "Code Postal: ", Code_postal_.BAN., "<br>",
+                                       "DPE: ", Etiquette_DPE),
+                        icon = makeIcon(iconUrl = "https://i.imgur.com/2X2u7mL.png",
+                                        iconWidth = 20, iconHeight = 30)) %>%
+      setView(lng = mean(data$longitude, na.rm = TRUE),
+              lat = mean(data$latitude, na.rm = TRUE),
+              zoom = 10)
+  })
+}
+
+# Lancer l'application
+shinyApp(ui, server)
