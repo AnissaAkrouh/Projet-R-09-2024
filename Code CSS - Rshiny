@@ -1,0 +1,198 @@
+/* Thème clair */
+.light-theme {
+    background-color: #EAD8B1;
+    color: #333333;
+    font-family: Arial, sans-serif;
+}
+
+.light-theme .box {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd; /* Bordure grise autour des boîtes */
+    color: #333;
+}
+
+.light-theme .box-title {
+    background-color: #f9f9f9;
+    color: #333;
+    padding: 10px;
+    font-size: 18px;
+}
+
+.light-theme .box-body {
+    color: #555;
+    font-size: 14px;
+}
+
+.light-theme table {
+    background-color: #fff;
+    color: #333;
+    border-collapse: collapse;
+}
+
+.light-theme table, th, td {
+    border: 1px solid #ddd; /* Bordures grises autour des tables et des cellules */
+    padding: 8px;
+}
+
+.light-theme h1, h2, h3, h4 {
+    color: #333333;
+}
+
+/* Thème sombre */
+.dark-theme {
+    background-color: #333333;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+}
+
+.dark-theme .box {
+    background-color: #444;
+    border: 1px solid #555;
+    color: #fff;
+}
+
+.dark-theme .box-title {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    font-size: 18px;
+}
+
+.dark-theme .box-body {
+    color: #ddd;
+    font-size: 14px;
+}
+
+.dark-theme table {
+    background-color: #555;
+    color: #fff;
+    border-collapse: collapse;
+}
+
+.dark-theme table, th, td {
+    border: 1px solid #777;
+    padding: 8px;
+}
+
+.dark-theme h1, h2, h3, h4 {
+    color: #28a745;
+}
+
+/* Thème pastel */
+.pastel-theme {
+    background-color: #f9f9f9;
+    color: #555555;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+}
+
+.pastel-theme .box {
+    background-color: #ffe0f0;
+    border: 1px solid #ff69b4;
+    color: #555;
+}
+
+.pastel-theme .box-title {
+    background-color: #ff69b4;
+    color: white;
+    padding: 10px;
+    font-size: 18px;
+}
+
+.pastel-theme .box-body {
+    color: #777;
+    font-size: 14px;
+}
+
+.pastel-theme table {
+    background-color: #ffe0f0;
+    color: #555;
+    border-collapse: collapse;
+}
+
+.pastel-theme table, th, td {
+    border: 1px solid #ff69b4;
+    padding: 8px;
+}
+
+.pastel-theme h1, h2, h3, h4 {
+    color: #ff69b4;
+}
+/* Thème professionnel */
+.professional-theme {
+    background-color: #f0f0f0; /* Arrière-plan gris clair, sobre et épuré */
+    color: #444444; /* Couleur du texte principale : gris foncé */
+    font-family: 'Times New Roman', Times, serif; /* Police classique pour un look professionnel */
+}
+
+.professional-theme .box {
+    background-color: #ffffff; /* Couleur de fond des boîtes : blanc pour un aspect propre */
+    border: 1px solid #cccccc; /* Bordure grise discrète autour des boîtes */
+    color: #444444; /* Couleur du texte à l'intérieur des boîtes : gris foncé */
+}
+
+.professional-theme .box-title {
+    background-color: #2c3e50; /* Couleur de fond des titres des boîtes : bleu marine */
+    color: white; /* Couleur du texte des titres : blanc */
+    padding: 10px; /* Espacement interne autour du texte du titre */
+    font-size: 18px; /* Taille de la police des titres */
+}
+
+.professional-theme .box-body {
+    color: #666666; /* Couleur du texte à l'intérieur des boîtes : gris moyen */
+    font-size: 14px; /* Taille du texte dans les boîtes */
+}
+
+.professional-theme table {
+    background-color: #ffffff; /* Couleur de fond des tables : blanc */
+    color: #444444; /* Couleur du texte dans les tables : gris foncé */
+    border-collapse: collapse; /* Retrait des espaces entre les bordures des cellules */
+}
+
+.professional-theme table, th, td {
+    border: 1px solid #cccccc; /* Bordure grise claire autour des tables */
+    padding: 8px; /* Espacement interne dans les cellules */
+}
+
+.professional-theme h1, h2, h3, h4 {
+    color: #2c3e50; /* Couleur des titres (h1, h2, etc.) : bleu marine */
+}
+/* Thème coloré */
+.colorful-theme {
+    background-color: #ffeb3b; /* Arrière-plan jaune vif */
+    color: #000000; /* Couleur du texte principale : noir */
+    font-family: 'Arial Black', Gadget, sans-serif; /* Police en gras pour un style audacieux */
+}
+
+.colorful-theme .box {
+    background-color: #ffffff; /* Couleur de fond des boîtes : blanc pour contraster avec l'arrière-plan */
+    border: 2px solid #e91e63; /* Bordure rose vif autour des boîtes */
+    color: #000000; /* Couleur du texte à l'intérieur des boîtes : noir */
+}
+
+.colorful-theme .box-title {
+    background-color: #e91e63; /* Couleur de fond des titres des boîtes : rose vif */
+    color: white; /* Couleur du texte des titres : blanc */
+    padding: 10px; /* Espacement interne autour du texte du titre */
+    font-size: 18px; /* Taille de la police des titres */
+}
+
+.colorful-theme .box-body {
+    color: #000000; /* Couleur du texte à l'intérieur des boîtes : noir */
+    font-size: 14px; /* Taille du texte dans les boîtes */
+}
+
+.colorful-theme table {
+    background-color: #ffffff; /* Couleur de fond des tables : blanc */
+    color: #000000; /* Couleur du texte dans les tables : noir */
+    border-collapse: collapse; /* Retrait des espaces entre les bordures des cellules */
+}
+
+.colorful-theme table, th, td {
+    border: 2px solid #e91e63; /* Bordures vives autour des tables, avec du rose vif */
+    padding: 8px; /* Espacement interne dans les cellules */
+}
+
+.colorful-theme h1, h2, h3, h4 {
+    color: #e91e63; /* Couleur des titres (h1, h2, etc.) : rose vif pour donner de l'énergie */
+}
+
