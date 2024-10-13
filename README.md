@@ -4,7 +4,7 @@ Ce projet, réalisé en collaboration entre AKROUH Anissa et FERHOUL Manal, a po
 
 **Lien de l'application** : [GreenTechApp](https://anissaakrouh.shinyapps.io/GreenTechApp/)
 
-### **Contenu**
+**Contenu du projet : **
 
 **Application RShiny** : Visualisation des données de logements (neufs/anciens) avec filtres dynamiques, cartes interactives et options d'exportation des données et graphiques.
 
