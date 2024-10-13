@@ -1,4 +1,4 @@
-## Projet RShiny - Analyse du Diagnostic de Performance Energétique (DPE)
+## Projet RShiny 
 
 Ce projet, réalisé en collaboration entre AKROUH Anissa et FERHOUL Manal, a pour objectif de développer une application RShiny permettant d'analyser l'impact du Diagnostic de Performance Energétique (DPE) sur les consommations électriques des logements en France.
 
