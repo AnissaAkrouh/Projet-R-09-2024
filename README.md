@@ -14,4 +14,5 @@ Ce projet, réalisé en collaboration entre AKROUH Anissa et FERHOUL Manal, a po
     . Code pour la création de la base de données : Scripts pour la gestion et la création des bases de données utilisées dans l'application.
     . Documentation fonctionnelle : Présentation des fonctionnalités principales de l'application, destinée aux utilisateurs.
     . Documentation technique : Explication détaillée de l'architecture de l'application et des packages R utilisés pour le déploiement.
-    . Lien de l'explication fonctionnelle Youtube : [GreenTechYoutube](https://www.youtube.com/watch?v=-5VgTvHaI-Y/)
+    . Lien de l'explication fonctionnelle Youtube : [https://www.youtube.com/watch?v=-5VgTvHaI-Y/](https://www.youtube.com/watch?v=-5VgTvHaI-Y/)
+
