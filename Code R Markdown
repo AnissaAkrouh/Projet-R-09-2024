@@ -1,0 +1,257 @@
+---
+# Le titre du document, centré grâce à une balise <div> avec text-align: center
+title: |
+  <div style="text-align: center;">
+    Analyse de la consommation énergétique en fonction du DPE
+  </div>
+
+# Les auteurs du document. GreenTech Solutions est centré et les noms des auteurs sont sur des lignes distinctes
+author: |
+  <div style="text-align: center;">
+    Par <br> GreenTech Solutions <br> 
+    AKROUH Anissa <br> 
+    FERHOUL Manal
+  </div>
+
+# Format de sortie du document (ici, un document HTML)
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+# Chargement des bibliothèques nécessaires à l'analyse
+library(ggplot2)     # Pour la création de graphiques
+library(dplyr)       # Pour la manipulation de données
+library(knitr)       # Pour générer des tableaux dans R Markdown
+library(plotly)      # Pour rendre les graphiques interactifs
+library(kableExtra)  # Pour personnaliser les tableaux générés
+library(ggpmisc)     # Pour ajouter des annotations statistiques aux graphiques
+
+# Lecture du fichier CSV contenant les données de logements
+data <- read.csv("C:/Users/akrou/OneDrive/Documenti/Logementscomplet.csv")
+
+```
+
+
+## Introduction
+
+Avec le changement climatique et la hausse des coûts énergétiques, la performance énergétique des logements est un enjeu majeur. Le Diagnostic de Performance Énergétique (DPE) permet d’évaluer cette performance et d'encourager une consommation plus sobre.
+
+Ce rapport élaboré par GreenTech Solutions vise à analyser l’impact des classes DPE sur la consommation électrique des logements. Cette étude explore les corrélations entre le DPE, la consommation énergétique, les coûts et les émissions de gaz à effet de serre, afin de mieux comprendre les leviers d’efficacité énergétique.
+
+## 1. Analyse de la consommation énergétique en fonction du DPE
+
+En moyenne, un logement situé dans le département du Rhône consomme environ **`r mean(data$Conso_5_usages_é_finale, na.rm = TRUE)` kWh** d’énergie. Cependant, cette consommation varie considérablement en fonction de plusieurs facteurs clés : la taille du logement, le type d’énergie utilisé, l’ancienneté du logement, et bien sûr, la classe de Diagnostic de Performance Énergétique (DPE).
+
+### 1.1 Ancienneté du logement et consommation moyenne
+
+Les logements anciens et neufs affichent des comportements différents en termes de consommation énergétique. Le tableau suivant compare la consommation énergétique moyenne entre les logements anciens et neufs.
+
+```{r anciennete-conso, echo=FALSE, warning=FALSE, message=FALSE,fig.align='center'}
+# Tableau récapitulatif de la consommation moyenne selon l'ancienneté du logement
+anciennete_stats <- data %>%
+  group_by(Type) %>%
+  summarise(Conso_moyenne = mean(Conso_5_usages_é_finale, na.rm = TRUE))
+
+# Afficher le tableau plus compact avec lignes en noir et texte centré
+kable(anciennete_stats, col.names = c("Type de logement", "Consommation moyenne (kWh)")) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE) %>%
+  column_spec(1, border_left = TRUE, bold = TRUE, color = "black", background = "white") %>%
+  column_spec(2, border_right = TRUE, bold = TRUE, color = "black", background = "white") %>%
+  row_spec(0, bold = TRUE, align = "c") %>%  # Centrer l'en-tête
+  row_spec(1:nrow(anciennete_stats), align = "c") %>%  # Centrer les données
+  kable_styling(latex_options = "HOLD_position") %>% # Pour éviter que le tableau flotte
+  add_header_above(c("Ancienneté du logement" = 2))  # Ajouter un en-tête
+```
+
+
+### 1.2 Taille du logement et consommation énergétique
+
+La taille du logement influence fortement la consommation énergétique. Plus un logement est grand, plus sa consommation totale d’énergie augmente. Pour étudier cette relation, nous avons réalisé une analyse statistique bivariée, corrélant la surface habitable à la consommation énergétique totale moyenne. 
+
+
+```{r taille-conso, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=7,fig.align='center'}
+# Calcul de la moyenne de la consommation d'électricité par surface habitable
+data_avg <- data %>%
+  group_by(Surface_habitable_logement) %>%
+  summarise(Conso_moyenne = mean(Conso_5_usages_é_finale, na.rm = TRUE))
+
+# Graphique bivarié de la relation entre taille du logement et consommation énergétique moyenne
+ggplot(data_avg, aes(x = Surface_habitable_logement, y = Conso_moyenne)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = "lm", col = "red") +
+  labs(title = "Relation entre la taille du logement et la consommation énergétique moyenne",
+       x = "Surface habitable (m²)", y = "Consommation moyenne d'énergie (kWh)") +
+  theme_minimal()
+
+```
+
+
+
+### 1.3 Type d'énergie et consommation moyenne
+
+Le type d’énergie utilisé pour le chauffage et les autres usages énergétiques a également un impact significatif sur la consommation. Le tableau ci-dessous présente la consommation énergétique moyenne selon le type d’énergie principale utilisé dans les logements.
+
+```{r type-energie-conso, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=7,fig.align='center'}
+# Diagramme en barres pour la consommation moyenne par type d'énergie
+energie_stats <- data %>%
+  group_by(Type_énergie_principale_chauffage) %>%
+  summarise(Conso_moyenne = mean(Conso_5_usages_é_finale, na.rm = TRUE)) %>%
+  arrange(Conso_moyenne)
+
+ggplot(energie_stats, aes(x = reorder(Type_énergie_principale_chauffage, Conso_moyenne), y = Conso_moyenne, fill = Type_énergie_principale_chauffage)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Consommation moyenne par type d'énergie",
+       x = "Type d'énergie", y = "Consommation moyenne (kWh)") +
+  theme_minimal() +
+  coord_flip() +
+  guides(fill = FALSE)  # Désactiver la légende pour la couleur
+
+```
+
+
+
+### 1.4 DPE et consommation énergétique moyenne
+
+La classe DPE est un indicateur clé pour évaluer l’efficacité énergétique d’un logement. Plus la classe DPE est faible (A ou B), plus la consommation énergétique est réduite. Le graphique ci-dessous montre la consommation énergétique moyenne en fonction des étiquettes DPE des logements.
+
+```{r DPE-conso, echo=FALSE,warning=FALSE, message=FALSE,fig.align='center'}
+# Diagramme en barres pour la consommation moyenne par étiquette DPE
+dpe_stats <- data %>%
+  group_by(Etiquette_DPE) %>%
+  summarise(Conso_moyenne = mean(Conso_5_usages_é_finale, na.rm = TRUE)) %>%
+  arrange(Conso_moyenne)
+
+ggplot(dpe_stats, aes(x = reorder(Etiquette_DPE, Conso_moyenne), y = Conso_moyenne, fill = Etiquette_DPE)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Consommation moyenne par étiquette DPE",
+       x = "Étiquette DPE", y = "Consommation moyenne (kWh)") +
+  theme_minimal() +
+  coord_flip()
+```
+
+
+
+## 2. Analyse des émissions de GES en fonction du DPE
+
+L'impact environnemental des logements, notamment en termes d'émissions de gaz à effet de serre (GES), est un enjeu majeur dans la lutte contre le changement climatique. Le Diagnostic de Performance Énergétique (DPE) offre un cadre pour évaluer les performances des logements en termes d'efficacité énergétique et d'émissions de GES.
+
+Dans cette section, nous explorons les corrélations entre les étiquettes DPE et les émissions de GES des logements. 
+
+### 2.1 Statistiques descriptives sur les émissions de GES
+
+Voici un aperçu des **émissions moyennes de GES** des logements selon leur étiquette DPE :
+
+```{r ges-dpe-stats, echo=FALSE, warning=FALSE, message=FALSE,fig.align='center'}
+# Statistiques descriptives des émissions de GES par étiquette DPE
+ges_stats <- data %>%
+  group_by(Etiquette_DPE) %>%
+  summarise(Emission_moyenne = mean(Emission_GES_5_usages, na.rm = TRUE))
+
+kable(ges_stats, col.names = c("Étiquette DPE", "Émissions moyennes (kgCO2/an)")) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, align = "c") %>%  # Centrer l'en-tête
+  row_spec(1:nrow(ges_stats), align = "c") %>%
+  kable_styling(latex_options = "HOLD_position")  # Empêche le tableau de flotter
+```
+
+
+### 2.2 Relation entre les émissions de GES et la surface habitable
+
+La taille du logement peut influencer les émissions de GES. Voici un graphique illustrant la relation entre la surface habitable et les émissions de GES moyennes.
+
+```{r surhab-GES, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+
+# Relation entre la surface habitable et les émissions de GES
+data_ges <- data %>%
+  filter(!is.na(Surface_habitable_logement), !is.na(Emission_GES_5_usages)) %>%
+  group_by(Surface_habitable_logement) %>%
+  summarise(Emission_moyenne = mean(Emission_GES_5_usages, na.rm = TRUE))
+
+ggplot(data_ges, aes(x = Surface_habitable_logement, y = Emission_moyenne)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = "lm", col = "red") +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x, parse = TRUE, label.x.npc = "left", label.y.npc = 1) +
+  labs(title = "Relation entre la surface habitable et les émissions de GES",
+       x = "Surface habitable (m²)", y = "Émissions moyennes de GES (kgCO2/an)") +
+  theme_minimal()
+
+```
+
+
+
+## 3. Analyse des coûts énergétiques en fonction du DPE
+
+Les coûts énergétiques des logements sont étroitement liés à leur performance énergétique. Le Diagnostic de Performance Énergétique (DPE) permet d’identifier les logements les plus performants en matière de consommation d’énergie et d’évaluer leurs coûts associés.
+
+### 3.1 Statistiques descriptives sur les coûts énergétiques
+
+Voici un aperçu des **coûts moyens** selon l'étiquette DPE des logements.
+
+```{r couts-dpe-stats, echo=FALSE, warning=FALSE, message=FALSE,fig.align='center'}
+# Statistiques descriptives des coûts par étiquette DPE
+couts_stats <- data %>%
+  group_by(Etiquette_DPE) %>%
+  summarise(Cout_moyen = mean(Coût_total_5_usages, na.rm = TRUE))
+
+kable(couts_stats, col.names = c("Étiquette DPE", "Coût moyen (€)")) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, align = "c") %>%
+  row_spec(1:nrow(couts_stats), align = "c") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+
+### 3.2 Répartition des coûts énergétiques moyens par type d'énergie (Diagramme en cercle)
+
+Ce graphique montre la **répartition des coûts énergétiques moyens** en fonction du **type d'énergie principale** utilisé dans les logements. Cela permet d’identifier les sources d'énergie les plus coûteuses.
+
+```{r piechart-couts-energie, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=7,fig.align='center'}
+# Calcul des coûts énergétiques moyens par type d'énergie
+data_piechart <- data %>%
+  filter(!is.na(Type_énergie_principale_chauffage), !is.na(Coût_total_5_usages)) %>%
+  group_by(Type_énergie_principale_chauffage) %>%
+  summarise(Cout_moyen = mean(Coût_total_5_usages, na.rm = TRUE))
+
+# Création du diagramme en cercle sans les valeurs numériques sur l'axe
+ggplot(data_piechart, aes(x = "", y = Cout_moyen, fill = Type_énergie_principale_chauffage)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y") +
+  labs(title = "Répartition des coûts énergétiques moyens par type d'énergie",
+       fill = "Type d'énergie") +
+  theme_minimal() +
+  theme(axis.text = element_blank(),  # Supprimer les valeurs numériques de l'axe
+        axis.ticks = element_blank(),  # Supprimer les repères
+        plot.title = element_text(hjust = 0.5, margin = margin(b = 20)))  # Centrer et espacer le titre
+
+
+```
+
+
+### 3.3 Carte thermique des coûts énergétiques moyens par type de logement et DPE
+
+Le type de logement, qu'il soit neuf ou ancien, influence les coûts énergétiques. Voici une carte thermique qui montre la variation des **coûts énergétiques moyens** en fonction du **type de logement** et de l'**étiquette DPE**.
+
+```{r heatmap-couts-type-logement, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5, fig.width=7,fig.align='center'}
+# Calcul des coûts énergétiques moyens par type de logement et étiquette DPE
+
+data_heatmap_logement <- data %>%
+  filter(!is.na(Type), !is.na(Coût_total_5_usages)) %>%
+  group_by(Type, Etiquette_DPE) %>%
+  summarise(Cout_moyen = mean(Coût_total_5_usages, na.rm = TRUE))
+
+# Création de la carte thermique
+ggplot(data_heatmap_logement, aes(x = Type, y = Etiquette_DPE, fill = Cout_moyen)) +
+  geom_tile() +
+  scale_fill_gradient(low = "lightblue", high = "red") +
+  labs(title = "Carte thermique des coûts énergétiques moyens par type de logement et DPE",
+       x = "Type de logement", y = "Étiquette DPE", fill = "Coût moyen (€)") +
+  theme_minimal()
+
+
+```
+
+# Conclusion
+
+Cette analyse montre que les logements ayant une meilleure classe DPE tendent à réduire les coûts énergétiques, bien que la variabilité au sein des classes soit importante. La taille des logements et la performance énergétique jouent toutes deux un rôle clé dans la détermination des coûts. En combinant ces deux aspects, il devient possible de cibler les améliorations énergétiques pour optimiser les coûts tout en réduisant les émissions de gaz à effet de serre.
+
