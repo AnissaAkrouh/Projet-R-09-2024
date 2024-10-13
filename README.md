@@ -8,7 +8,8 @@ Ce projet, réalisé en collaboration entre AKROUH Anissa et FERHOUL Manal, a po
 
     . Application RShiny : Visualisation des données de logements (neufs/anciens) avec filtres dynamiques, cartes interactives et options d'exportation des données et graphiques.
     . Code de l'application : Tous les scripts R utilisés pour le développement de l'application.
-    . Code du rapport RMarkdown : Analyse statistique des données.
+    . Code du rapport RMarkdown : Code ayant permit le développement de l'Analyse statistique des données.
+    . Analyse R Markdown en PDF : Analyse statistique des données.
     . Code CSS : Fichier de styles personnalisés pour modifier l'apparence de l'application.
     . Code pour la création de la base de données : Scripts pour la gestion et la création des bases de données utilisées dans l'application.
     . Documentation fonctionnelle : Présentation des fonctionnalités principales de l'application, destinée aux utilisateurs.
